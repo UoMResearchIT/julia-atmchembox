@@ -18,7 +18,10 @@ function extract_mechanism(filename::String)
     io_buffer = IOBuffer(append=true)
 
     rate_dict = Dict{Integer, String}()
+    stoich_dict = Dict{Integer, Dict{Integer, Integer}}()
     
+    println("Parsing each equation")
+
     ###############################################################################
     # Use open() function is more idiomatic and helps manage resources effectively.
     # It ensures that the file is closed automatically as well
@@ -74,7 +77,9 @@ function extract_mechanism(filename::String)
                 rate_full = split(equation_full, ":", limit=2)[2]
                 rate_full = strip(rate_full)
                 
-                rate_dict[parse(Int, current_equation_index)] = rate_full
+                equation_step = parse(Int, current_equation_index)
+                
+                rate_dict[equation_step] = rate_full
                 #println(current_equation_index, " is ", rate_dict[parse(Int, current_equation_index)])
                 #This assumes everyline, as in KPP, finishes with a ';' character
 
@@ -92,9 +97,14 @@ function extract_mechanism(filename::String)
                 # '2.0NO2' or '5ISOPOOH'. The use of integer versus float can vary so have to assume no care taken
                 # in being consistent 
 
-                reactant_step=0 #used to identify reactants by number, for any given reaction
-                product_step=0
+                reactant_step = 0 #used to identify reactants by number, for any given reaction
+                product_step = 0
                 
+                stoich = 0
+
+                #Create the outer dictionary with default inner dictionaries
+                stoich_dict[equation_step] = inner_dict()
+
                 for reactant in reactants
                     reactant = replace(reactant, r"\s+" => "") #remove all tables, newlines, whitespace
                     
@@ -111,7 +121,7 @@ function extract_mechanism(filename::String)
                             if startswith(reactant, stoich)
                                 #eg: 2NO
                                 reactant = split(reactant, stoich, limit=2)[2]
-                                stoich = float(stoich)
+                                stoich = parse(Float64, stoich)
                             else
                                 stoich = 1.0
                             end
@@ -121,16 +131,32 @@ function extract_mechanism(filename::String)
                             #We therefore need to ensure that the reactant is 'NO2'. To do this we cut the value
                             #in temp[0] away from the original string. Lets assume that we can attach the first
                             #part of the text with the second number in temp. Thus
-                            reactant = split(reactant, stoich, limit=2)[2] + temp[2]
-                            println("testing: $reactant")
+                            if startswith(reactant, stoich)
+                                reactant = split(reactant, stoich, limit=2)[2] * temp[2]
+                                stoich = parse(Float64, stoich)
+                            else
+                                stoich = 1.0 
+                            end
                         else
-                            println("empty temp")
+                            # should not go into this case
                         end
 
                         #println("{reactant} the length is {len(temp)}" )
 
-                    catch
-                        println("not match $reactant")
+                    catch ex
+                        #println("$reactant This is $ex")
+                        stoich = 1.0
+                    end
+
+                    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                    # - Store stoichiometry, species flags and hessian info in dictionaries
+                    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                    
+                    #Now store the stoichiometry and reactant in dictionaries
+                    if !(reactant in ["hv"])
+                        stoich_dict[equation_step][reactant_step] = stoich
+
+                        #print(stoich_dict)
                     end
                 end
                 
@@ -141,13 +167,18 @@ function extract_mechanism(filename::String)
         end
     end
     
-    
+    #print(rate_dict)
+    print(stoich_dict)
     println("Calculating total number of equations = $max_equations")
     
 
 
 end
 
+# Define a function to create the default inner dictionary
+function inner_dict()
+    return Dict{Any, Any}()
+end
 
 
 extract_mechanism("MCM_BCARY.eqn")
