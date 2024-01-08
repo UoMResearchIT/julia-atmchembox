@@ -18,8 +18,17 @@ function extract_mechanism(filename::String)
     io_buffer = IOBuffer(append=true)
 
     rate_dict = Dict{Integer, String}()
+    loss_dict = Dict{String, Dict{Integer, Integer}}()
     stoich_dict = Dict{Integer, Dict{Integer, Integer}}()
+    rate_dict_reactants = Dict{Integer, Dict{Integer, String}}()
+    species_dict = Dict{Integer, String}()
+    species_dict2array = Dict{String, Integer}()
+    species_hess_data = Dict{Any, Any}()
+    species_hess_loss_data = Dict{Any, Vector{Any}}()
     
+    #Create an integer that stores number of unque species
+    species_step = 0
+
     println("Parsing each equation")
 
     ###############################################################################
@@ -102,8 +111,12 @@ function extract_mechanism(filename::String)
                 
                 stoich = 0
 
-                #Create the outer dictionary with default inner dictionaries
-                stoich_dict[equation_step] = inner_dict()
+                #Create the default inner dictionaries
+                #stoich_dict[equation_step] = inner_dict()
+                #rate_dict_reactants[equation_step] = inner_dict()
+
+                stoich_dict[equation_step] = Dict{Integer, Integer}()
+                rate_dict_reactants[equation_step] = Dict{Integer, String}()
 
                 for reactant in reactants
                     reactant = replace(reactant, r"\s+" => "") #remove all tables, newlines, whitespace
@@ -155,8 +168,30 @@ function extract_mechanism(filename::String)
                     #Now store the stoichiometry and reactant in dictionaries
                     if !(reactant in ["hv"])
                         stoich_dict[equation_step][reactant_step] = stoich
-
+                        rate_dict_reactants[equation_step][reactant_step] = reactant 
+                        
                         #print(stoich_dict)
+                        
+                        # -- Update species dictionaries --
+                        if !(reactant in values(species_dict)) #check to see if entry already exists
+                            species_dict[species_step] = reactant # useful for checking all parsed species    
+                            species_dict2array[reactant] = species_step #useful for converting a dict to array
+                            species_step+=1
+                            
+                            #print(species_dict)
+                        end
+
+                        # -- Update hessian dictionaries --
+                        if !(reactant in values(species_hess_loss_data))
+                            species_hess_loss_data[reactant] = []
+                        end
+                        
+                        push!(species_hess_loss_data[reactant], equation_step) #so from this we can work out a dx/dy
+                        
+                        # -- Update loss dictionaries --
+
+                        
+                        
                     end
                 end
                 
@@ -168,7 +203,8 @@ function extract_mechanism(filename::String)
     end
     
     #print(rate_dict)
-    print(stoich_dict)
+    #print(stoich_dict)
+    #print(rate_dict_reactants)
     println("Calculating total number of equations = $max_equations")
     
 
@@ -182,3 +218,11 @@ end
 
 
 extract_mechanism("MCM_BCARY.eqn")
+
+#test
+# testvalue = "hello"
+# myvalue = Dict{Any, Any}()
+# myvalue[1] = "hello"
+# if testvalue in values(myvalue)
+#     print("it can")
+# end
