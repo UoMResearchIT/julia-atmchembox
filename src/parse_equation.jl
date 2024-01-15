@@ -8,6 +8,7 @@
 # filename: name of mechanism file
 # Output:
 ##########################################################################################
+
 function extract_mechanism(filename::String)
     println("Opening file $filename.txt for parsing")
     
@@ -18,13 +19,15 @@ function extract_mechanism(filename::String)
     io_buffer = IOBuffer(append=true)
 
     rate_dict = Dict{Integer, String}()
-    loss_dict = Dict{String, Dict{Integer, Integer}}()
+    loss_dict = Dict{String, Dict{Integer, Float64}}()
+    gain_dict = Dict{String, Dict{Integer, Float64}}()
     stoich_dict = Dict{Integer, Dict{Integer, Integer}}()
     rate_dict_reactants = Dict{Integer, Dict{Integer, String}}()
     species_dict = Dict{Integer, String}()
     species_dict2array = Dict{String, Integer}()
     species_hess_data = Dict{Any, Any}()
-    species_hess_loss_data = Dict{Any, Vector{Any}}()
+    species_hess_loss_data = Dict{String, Vector{Any}}()
+    species_hess_gain_data = Dict{String, Vector{Any}}()
     
     #Create an integer that stores number of unque species
     species_step = 0
@@ -145,7 +148,7 @@ function extract_mechanism(filename::String)
                             #in temp[0] away from the original string. Lets assume that we can attach the first
                             #part of the text with the second number in temp. Thus
                             if startswith(reactant, stoich)
-                                reactant = split(reactant, stoich, limit=2)[2] * temp[2]
+                                reactant = split(reactant, stoich, limit=2)[2] * temp[2] # concrate
                                 stoich = parse(Float64, stoich)
                             else
                                 stoich = 1.0 
@@ -189,12 +192,98 @@ function extract_mechanism(filename::String)
                         push!(species_hess_loss_data[reactant], equation_step) #so from this we can work out a dx/dy
                         
                         # -- Update loss dictionaries --
-
+                        # if haskey(loss_dict, reactant)
+                        #     if haskey(loss_dict[reactant], equation_step)
+                        #         # If it exists, increment the value
+                        #         loss_dict[reactant][equation_step] += stoich       
+                        #     else
+                        #         # If it doesn't exist, create a new entry
+                        #         loss_dict[reactant][equation_step] = stoich
+                        #     end
+                        # else
+                        #     # If the outer dictionary doesn't have an entry for the name, create one
+                        #     loss_dict[reactant] = Dict{Int, Float64}()
+                        #     loss_dict[reactant][equation_step] = stoich
+                        # end
                         
-                        
+                        # -- Update loss dictionaries --
+                        loss_dict[reactant][equation_step]  = get!(get!(loss_dict, reactant, Dict{Int, Float64}()), equation_step, 0.0) + stoich 
                     end
+                    
+                    reactant_step += 1
                 end
                 
+                #reset the 
+                stoich = 0
+
+                if length(products) > 0
+                    for product in products #This are the 'reactants' in this equation
+                        try
+                            product = replace(product, r"\s+" => "") #remove all tables, newlines, whitespace
+
+                            #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+		                    # - Extract stochiometry and unique product identifier
+		                    #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            try
+                                temp = collect(m.match for m in eachmatch(r"[-+]?\d*\.\d+|\d+|\d+", product)) #This extracts all numbers either side of some text. 
+                                stoich = temp[0] #This selects the first number extracted, if any.
+
+                                # Now need to work out if this value is before the variable
+                                # If after, we ignore this. EG. If '2' it could come from '2NO2' or just 'NO2'
+                                # If len(temp)==1 then we only have one number and can proceed with the following
+                                if length(temp) == 1
+                                    if startswith(product, stoich)
+                                        product = split(product, stoich, limit=2)[2]
+                                        stoich = parse(Float64, stoich)
+                                    else
+                                        stoich = 1.0
+                                    end
+                                elseif length(temp) > 1
+                                    #If this is the case, we need to ensure the reactant extraction is unique. For example
+                                    #If the string is '2NO2' the above procedure extracts 'NO' as the unique reactant. 
+                                    #We therefore need to ensure that the reactant is 'NO2'. To do this we cut the value
+                                    #in temp[0] away from the original string. Lets assume that we can attach the first
+                                    #part of the text with the second number in temp. Thus
+                                    if startswith(product, stoich)
+                                        product = split(product, stoich, limit=2)[2] * temp[2]
+                                        stoich = parse(Float64, stoich)
+                                    else
+                                        stoich = 1.0                                
+                                    end
+                                else
+                                    #should not go into this case
+                                end
+                            catch ex
+                                stoich = 1.0
+                            end
+                            #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            # - Store stoichiometry, species flags and hessian info in dictionaries
+                            #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            #Now store the stoichiometry and reactant in dictionaries
+                            if !(product in ["hv"])
+                                # -- Update species dictionaries --
+                                if !(product in values(species_dict)) #check to see if entry already exists
+                                    species_dict[species_step]=product # useful for checking all parsed species
+                                    species_dict2array[product]=species_step #useful for converting a dict to array
+                                    species_step+=1
+                                end
+
+                                # -- Update hessian dictionaries --
+                                if !(product in values(species_hess_gain_data))
+                                    species_hess_gain_data[product]=[]
+                                end
+
+                                push!(species_hess_gain_data[product], equation_step) #so from this we can work out a dx/dy
+
+                                # -- Update loss dictionaries --
+                                gain_dict[product][equation_step] = get!(get!(gain_dict, product, Dict{Int, Float64}()), equation_step, 0.0) + stoich
+                                
+                            end
+                            product_step+=1
+                        catch ex
+                        end
+                    end    
+                end
                 
                 # Clear IOBuffer 
                 take!(io_buffer)
@@ -226,3 +315,15 @@ extract_mechanism("MCM_BCARY.eqn")
 # if testvalue in values(myvalue)
 #     print("it can")
 # end
+# loss_dict[reactant][equation_step]  = get!(get!(loss_dict, reactant, Dict{Int, Float64}()), equation_step, 0.0) + stoich 
+
+# test_dict = Dict{Any, Dict{Any, Any}}()
+# key = "a"
+# step = 1
+# value = 1.2
+# test_dict[key][step] = get!(get!(test_dict, key, Dict{Int, Float64}()), step, 0.0) + value 
+# println(test_dict)
+
+# value = 0.8
+# test_dict[key][step] = get!(get!(test_dict, key, Dict{Int, Float64}()), step, 0.0) + value 
+# println(test_dict)
