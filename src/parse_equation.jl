@@ -21,16 +21,16 @@ function extract_mechanism(filename::String)
     rate_dict = Dict{Integer, String}()
     loss_dict = Dict{String, Dict{Integer, Float64}}()
     gain_dict = Dict{String, Dict{Integer, Float64}}()
-    stoich_dict = Dict{Integer, Dict{Integer, Integer}}()
+    stoich_dict = Dict{Integer, Dict{Integer, Float64}}()
     rate_dict_reactants = Dict{Integer, Dict{Integer, String}}()
     species_dict = Dict{Integer, String}()
     species_dict2array = Dict{String, Integer}()
     species_hess_data = Dict{Any, Any}()
-    species_hess_loss_data = Dict{String, Vector{Any}}()
-    species_hess_gain_data = Dict{String, Vector{Any}}()
+    species_hess_loss_data = Dict{String, Vector{Integer}}()
+    species_hess_gain_data = Dict{String, Vector{Integer}}()
     
     #Create an integer that stores number of unque species
-    species_step = 0
+    species_step = 1
 
     println("Parsing each equation")
 
@@ -185,10 +185,9 @@ function extract_mechanism(filename::String)
                         end
 
                         # -- Update hessian dictionaries --
-                        if !(reactant in values(species_hess_loss_data))
+                        if !(reactant in keys(species_hess_loss_data))
                             species_hess_loss_data[reactant] = []
                         end
-                        
                         push!(species_hess_loss_data[reactant], equation_step) #so from this we can work out a dx/dy
                         
                         # -- Update loss dictionaries --
@@ -269,14 +268,17 @@ function extract_mechanism(filename::String)
                                 end
 
                                 # -- Update hessian dictionaries --
-                                if !(product in values(species_hess_gain_data))
-                                    species_hess_gain_data[product]=[]
+                                # if !(product in values(species_hess_gain_data))
+                                #     species_hess_gain_data[product]=[]
+                                # end
+                                if !(product in keys(species_hess_gain_data))
+                                    species_hess_gain_data[product] = []
                                 end
-
                                 push!(species_hess_gain_data[product], equation_step) #so from this we can work out a dx/dy
 
                                 # -- Update loss dictionaries --
                                 gain_dict[product][equation_step] = get!(get!(gain_dict, product, Dict{Int, Float64}()), equation_step, 0.0) + stoich
+                                #gain_dict[product][equation_step] = get!(get!(gain_dict, reactant, Dict{Int, Float64}()), equation_step, 0.0) + stoich
                                 
                             end
                             product_step+=1
@@ -295,8 +297,10 @@ function extract_mechanism(filename::String)
     #print(stoich_dict)
     #print(rate_dict_reactants)
     println("Calculating total number of equations = $max_equations")
-    
+    println("Total number of species = " ,  length(keys(species_dict)))
+    print("Saving all equation information to dictionaries")
 
+    #print(max_equations)
 
 end
 
@@ -307,23 +311,3 @@ end
 
 
 extract_mechanism("MCM_BCARY.eqn")
-
-#test
-# testvalue = "hello"
-# myvalue = Dict{Any, Any}()
-# myvalue[1] = "hello"
-# if testvalue in values(myvalue)
-#     print("it can")
-# end
-# loss_dict[reactant][equation_step]  = get!(get!(loss_dict, reactant, Dict{Int, Float64}()), equation_step, 0.0) + stoich 
-
-# test_dict = Dict{Any, Dict{Any, Any}}()
-# key = "a"
-# step = 1
-# value = 1.2
-# test_dict[key][step] = get!(get!(test_dict, key, Dict{Int, Float64}()), step, 0.0) + value 
-# println(test_dict)
-
-# value = 0.8
-# test_dict[key][step] = get!(get!(test_dict, key, Dict{Int, Float64}()), step, 0.0) + value 
-# println(test_dict)
