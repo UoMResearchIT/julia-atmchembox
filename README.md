@@ -7,7 +7,7 @@ The main entry point of Julia-atmchembox is located in 'main.jl'. You can find t
 To run this program, navigate to the root directory of this project and execute:
 
 ```
-julia --project=Project.toml src\main.jl
+julia --project=Project.toml src\main.jl --eqt_file eqt_file/MCM_APINENE.eqn.txt
 ```
 ## Test Cases
 All test cases are located under the 'test' folder. You can create any test file as needed. One straightforward method to conduct testing is by creating a test file for the target module or function, writing desired test case, and grouping them into a testset. Subsequently register the test in runtest.jl. 
