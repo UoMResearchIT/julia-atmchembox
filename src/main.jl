@@ -28,7 +28,7 @@ function file_path(MCM_filenpath::String)
     project_root_path = dirname(@__DIR__)
 
     # concrate the project_root_path with filename
-    full_file_path = string(project_root_path, MCM_filenpath)
+    full_file_path = string(project_root_path, '/', MCM_filenpath)
 
     println("Full file path is $full_file_path")
     return full_file_path
