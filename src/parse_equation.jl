@@ -19,17 +19,8 @@ module parse_equation
 
 
 
-    function extract_mechanism(MCM_filenpath::String)
-        println("Opening file $MCM_filenpath for parsing")
-        
-        # Store the Project root directory in to the variable: project_root_path
-        project_root_path = dirname(@__DIR__)
+    function extract_mechanism(full_file_path::String)
 
-        # concrate the project_root_path with filename
-        full_file_path = string(project_root_path, MCM_filenpath)
-
-        
-        println("Full file path is $full_file_path")
         max_equations = 0 # Use to store max number of equation
         
         io_buffer = IOBuffer(append=true)

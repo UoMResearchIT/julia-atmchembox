@@ -23,11 +23,24 @@ function parse_commandline()
     return parse_args(settings)
 end
 
+function file_path(MCM_filenpath::String)
+    # Store the Project root directory in to the variable: project_root_path
+    project_root_path = dirname(@__DIR__)
+
+    # concrate the project_root_path with filename
+    full_file_path = string(project_root_path, MCM_filenpath)
+
+    println("Full file path is $full_file_path")
+    return full_file_path
+end
+
 function main()
     parsed_args = parse_commandline()
     println("eqt_file: ", parsed_args["eqt_file"])
 
-    extract_mechanism(parsed_args["eqt_file"])
+    full_file_path = file_path(parsed_args["eqt_file"])
+
+    extract_mechanism(full_file_path)
 end
 # Call exported function: extract_mechanism from parse_equation module
 #extract_mechanism("/eqt_file/MCM_BCARY.eqn.txt")
