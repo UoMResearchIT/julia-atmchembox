@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2024 University of Manchester
+
+SPDX-License-Identifier: apache-2.0
+-->
+
 # julia-atmchembox
 Atmospheric Chemistry Box Model, written in Julia
 

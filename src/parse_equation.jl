@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 #########################################################################################
 # This is a module to parse the mechanism equation file 
 # Read the mechanism equation file (located at eqt_file folder and

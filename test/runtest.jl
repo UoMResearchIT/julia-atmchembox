@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 ####################################
 # The main program to run all the test cases
 ####################################

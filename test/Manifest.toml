@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: apache-2.0
+
 # This file is machine-generated - editing it directly is not advised
 
 julia_version = "1.9.4"
