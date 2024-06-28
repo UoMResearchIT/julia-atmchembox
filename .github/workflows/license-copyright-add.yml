@@ -24,7 +24,7 @@ jobs:
       - name: Add Headers
         uses: fsfe/reuse-action@v3
         with:
-          args: annotate --copyright "University of Manchester" --license "gpl-3.0" --recursive /github/workspace --fallback-dot-license
+          args: annotate --copyright "University of Manchester" --license "agpl-3.0-only" --recursive /github/workspace --fallback-dot-license
           
       - name: Check if changed
         id: check_changed
