@@ -15,20 +15,33 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          path: repo
         
       - name: Extract branch name
         id: branch_name
         shell: bash
         run: echo "ORIG_BRANCH=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
         
+      - name: Move actions out of way
+        shell: bash
+        run: |
+          [ ! -d repo/.github ] || mv repo/.github .
+        
       - name: Add Headers
         uses: fsfe/reuse-action@v3
         with:
           args: annotate --copyright "University of Manchester" --license "agpl-3.0-only" --recursive /github/workspace --fallback-dot-license
+
+      - name: Put actions back if they exist
+        shell: bash
+        run: |
+          [ ! -d .github ] || mv .github repo
           
       - name: Check if changed
         id: check_changed
         shell: bash
+        working-directory: repo
         run: |
           set +e
           git diff --quiet
@@ -49,6 +62,7 @@ jobs:
         if: steps.check_changed.outputs.CHANGED == 1
         id: branch_creation
         shell: bash
+        working-directory: repo
         env:
             GH_TOKEN: ${{ github.token }}
         run: |
