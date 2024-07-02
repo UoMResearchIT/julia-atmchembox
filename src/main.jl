@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: agpl-3.0-only
+
 ########################################################################################
 # This is the main file for the project. It is the entry point for the application.
 # It is responsible for setting up the application and run the main logic.

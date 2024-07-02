@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: agpl-3.0-only
+
 ################################
 # create a test for the extract_mechanism function
 ################################

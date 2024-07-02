@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 University of Manchester
+#
+# SPDX-License-Identifier: agpl-3.0-only
+
 #########################################################################################
 # This is a module to parse the mechanism equation file 
 # Read the mechanism equation file (located at eqt_file folder and
