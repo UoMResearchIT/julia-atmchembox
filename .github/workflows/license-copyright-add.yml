@@ -69,6 +69,7 @@ jobs:
             git config --global user.email "no-reply@github.com"
             git config --global user.name "GitHub Actions"
             git checkout -b add-license-headers-to-${{ steps.branch_name.outputs.ORIG_BRANCH }}-${{ env.NOW }}
+            git add -A
             git commit -a -m "Add License and Copyright Headers"
             git push origin add-license-headers-to-${{ steps.branch_name.outputs.ORIG_BRANCH }}-${{ env.NOW }}
             echo "MSG=Copyright updates at ${{ github.server_url }}/${{ github.repository }}/compare/${{ steps.branch_name.outputs.ORIG_BRANCH }}...add-license-headers-to-${{ steps.branch_name.outputs.ORIG_BRANCH }}-${{ env.NOW }}?expand=1, please review and merge." >> $GITHUB_OUTPUT
